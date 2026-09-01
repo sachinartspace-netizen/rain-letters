@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 interface PresenceBarProps {
   otherUserName: string | null;
@@ -6,16 +7,16 @@ interface PresenceBarProps {
 }
 
 const PresenceBar: React.FC<PresenceBarProps> = ({ otherUserName, isOtherOnline }) => {
+  const { displayName } = useAuthContext();
+
+  const partnerName = otherUserName || (displayName === 'Sachin' ? 'Pratima' : displayName === 'Pratima' ? 'Sachin' : 'Partner');
+
   return (
     <div className="presence-bar">
-      {otherUserName ? (
-        <>
-          <span className={`presence-dot ${isOtherOnline ? 'presence-dot--online' : 'presence-dot--offline'}`} />
-          <span>{otherUserName} {isOtherOnline ? 'online' : 'away'}</span>
-        </>
-      ) : (
-        <span>waiting for someone...</span>
-      )}
+      <span className={`presence-dot ${isOtherOnline ? 'presence-dot--online' : 'presence-dot--offline'}`} />
+      <span className="presence-text">
+        {partnerName} {isOtherOnline ? '● online' : '● away'}
+      </span>
     </div>
   );
 };

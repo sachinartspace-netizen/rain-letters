@@ -17,6 +17,8 @@ const ChatView: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const partnerName = otherUserName || (displayName === 'Sachin' ? 'Pratima' : 'Sachin');
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -80,14 +82,14 @@ const ChatView: React.FC = () => {
             <MessageBubble
               key={msg.id}
               message={msg}
-              isOwn={msg.sender_id === user?.id}
+              isOwn={Boolean(msg.sender_id === user?.id || (user?.email && msg.sender_email.toLowerCase() === user.email.toLowerCase()))}
             />
           ))
         )}
         
         <AnimatePresence>
-          {isOtherTyping && otherUserName && (
-            <TypingIndicator name={otherUserName} isTyping={true} />
+          {isOtherTyping && (
+            <TypingIndicator name={partnerName} isTyping={true} />
           )}
         </AnimatePresence>
         <div ref={messagesEndRef} />
@@ -102,6 +104,12 @@ const ChatView: React.FC = () => {
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            inputMode="text"
+            aria-label="Type a message"
           />
           <button className="chat-input__send" onClick={handleSend} title="Send">
             ➤

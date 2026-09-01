@@ -44,3 +44,23 @@ export const isEmailAllowed = (email: string): boolean => {
   if (!email) return false;
   return allowedEmails.map(e => e.toLowerCase()).includes(email.toLowerCase());
 };
+
+export const getDisplayNameFromEmail = (email: string): string => {
+  if (!email) return 'User';
+  const lower = email.toLowerCase().trim();
+  if ([
+    'pratimahansda14@gmail.com',
+    'pratimahansda18@gmail.com',
+    'praticreates@gmail.com',
+  ].includes(lower)) {
+    return 'Pratima';
+  }
+  if ([
+    'sachin.artspace@gmail.com',
+    'sachingupta706155@gmail.com',
+    'sachingupta766741@gmail.com',
+  ].includes(lower)) {
+    return 'Sachin';
+  }
+  return lower.split('@')[0] || 'User';
+};

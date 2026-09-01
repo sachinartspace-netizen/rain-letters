@@ -140,6 +140,10 @@
   border-color: var(--color-accent-glow, #a5b4fc);
 }
 
+.chat-input__field::-webkit-input-speech-button {
+  display: none;
+}
+
 .chat-input__send {
   width: 44px;
   height: 44px;

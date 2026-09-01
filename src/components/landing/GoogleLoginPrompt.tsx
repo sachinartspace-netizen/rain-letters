@@ -8,10 +8,9 @@ interface GoogleLoginPromptProps {
 }
 
 const GoogleLoginPrompt: React.FC<GoogleLoginPromptProps> = ({ onAuthStart }) => {
-  const { signIn, signInAsDemo } = useAuthContext();
+  const { signIn } = useAuthContext();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [showDemoOptions, setShowDemoOptions] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
@@ -32,18 +31,9 @@ const GoogleLoginPrompt: React.FC<GoogleLoginPromptProps> = ({ onAuthStart }) =>
     try {
       await signIn();
     } catch (err) {
-      console.warn('Google sign-in failed, showing quick demo access options:', err);
+      console.warn('Google sign-in failed:', err);
       setIsLoggingIn(false);
-      setShowDemoOptions(true);
     }
-  };
-
-  const handleDemoLogin = (email: string, name: string) => {
-    signInAsDemo(email, name);
-    // Allow state to settle before navigating
-    setTimeout(() => {
-      navigate('/garden');
-    }, 50);
   };
 
   return (
@@ -87,59 +77,6 @@ const GoogleLoginPrompt: React.FC<GoogleLoginPromptProps> = ({ onAuthStart }) =>
               {isLoggingIn ? 'Connecting to Google...' : 'Continue with Google'}
             </button>
 
-            {/* Quick Private Direct Access / Fallback toggle */}
-            {!showDemoOptions ? (
-              <button 
-                onClick={() => setShowDemoOptions(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--color-text-dim)',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  marginTop: '0.5rem'
-                }}
-              >
-                Quick Direct Sign-In (Demo Access)
-              </button>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                  background: 'var(--glass-bg)',
-                  padding: '1rem 1.5rem',
-                  borderRadius: 'var(--radius-lg)',
-                  border: 'var(--border-subtle)',
-                  marginTop: '0.5rem'
-                }}
-              >
-                <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                  Select authorized person to enter:
-                </span>
-                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
-                  <button
-                    className="google-btn"
-                    style={{ padding: '8px 16px', fontSize: '0.875rem' }}
-                    onClick={() => handleDemoLogin('pratimahansda14@gmail.com', 'Pratima')}
-                  >
-                    🌸 I'm Pratima
-                  </button>
-                  <button
-                    className="google-btn"
-                    style={{ padding: '8px 16px', fontSize: '0.875rem' }}
-                    onClick={() => handleDemoLogin('sachingupta706155@gmail.com', 'Sachin')}
-                  >
-                    🌧 I'm Sachin
-                  </button>
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Message } from '../../lib/database';
+import { getDisplayNameFromEmail } from '../../lib/auth';
 
 interface MessageBubbleProps {
   message: Message;
@@ -14,6 +15,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, showSende
     minute: '2-digit',
   });
 
+  const resolvedSenderName = getDisplayNameFromEmail(message.sender_email) || message.sender_name || 'User';
+
   return (
     <motion.div
       className={`message-bubble ${isOwn ? 'message-bubble--own' : 'message-bubble--other'}`}
@@ -22,7 +25,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, showSende
       transition={{ duration: 0.2 }}
     >
       {showSender && !isOwn && (
-        <div className="message-bubble__sender">{message.sender_name}</div>
+        <div className="message-bubble__sender">{resolvedSenderName}</div>
       )}
       <div className="message-bubble__text">{message.message}</div>
       <div className="message-bubble__time">{timeString}</div>

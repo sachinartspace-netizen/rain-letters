@@ -10,14 +10,12 @@ import OnlineToast from './OnlineToast';
 import GamesMenu from '../games/GamesMenu';
 import TicTacToe from '../games/TicTacToe';
 import RainCanvas from '../layout/RainCanvas';
-import SoundToggle from '../ui/SoundToggle';
 
 import { useAuthContext } from '../../contexts/AuthContext';
 import usePresence from '../../hooks/usePresence';
 import { useWeather } from '../../contexts/WeatherContext';
 import { useGardenContext } from '../../contexts/GardenContext';
 import useQuality from '../../hooks/useQuality';
-import useSound from '../../hooks/useSound';
 
 import '../../styles/chat.css';
 
@@ -39,7 +37,6 @@ const PrivateWorld: React.FC = () => {
   const { rainIntensity, windStrength, setRainIntensity } = useWeather();
   const { growth, totalMinutes, isGrowing } = useGardenContext();
   const { quality } = useQuality();
-  const { soundEnabled, toggleSound } = useSound();
 
   const [showToast, setShowToast] = useState(false);
 
@@ -126,8 +123,6 @@ const PrivateWorld: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
-
-      <SoundToggle enabled={soundEnabled} onToggle={toggleSound} />
     </div>
   );
 };

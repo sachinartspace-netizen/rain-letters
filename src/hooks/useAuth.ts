@@ -4,13 +4,19 @@ import { supabase } from '../lib/supabase';
 import { getSession, isEmailAllowed, signInWithGoogle, signOut as authSignOut } from '../lib/auth';
 import { getProfile, Profile } from '../lib/database';
 
-const DEMO_USER_KEY = 'rain-letters-demo-user';
+const getDisplayNameForEmail = (email: string, fallback?: string) => {
+  const normalized = (email || '').toLowerCase();
+  const emailToName: Record<string, string> = {
+    'pratimahansda14@gmail.com': 'Pratima',
+    'pratimahansda18@gmail.com': 'Pratima',
+    'praticreates@gmail.com': 'Pratima',
+    'sachin.artspace@gmail.com': 'Sachin',
+    'sachingupta706155@gmail.com': 'Sachin',
+    'sachingupta766741@gmail.com': 'Sachin',
+  };
 
-export interface DemoUser {
-  id: string;
-  email: string;
-  display_name: string;
-}
+  return emailToName[normalized] || fallback || (normalized ? normalized.split('@')[0] : '');
+};
 
 export default function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -26,33 +32,6 @@ export default function useAuth() {
 
     const initAuth = async () => {
       try {
-        // Check for local demo user session first
-        const savedDemoUser = localStorage.getItem(DEMO_USER_KEY);
-        if (savedDemoUser) {
-          try {
-            const parsedDemo: DemoUser = JSON.parse(savedDemoUser);
-            if (mounted) {
-              const fakeUser = { id: parsedDemo.id, email: parsedDemo.email } as User;
-              setUser(fakeUser);
-              setIsAllowed(true);
-              setDisplayName(parsedDemo.display_name);
-              setProfile({
-                id: parsedDemo.id,
-                email: parsedDemo.email,
-                display_name: parsedDemo.display_name,
-                avatar_url: null,
-                created_at: new Date().toISOString(),
-                last_seen: new Date().toISOString(),
-              });
-              setIsLoading(false);
-              return;
-            }
-          } catch {
-            localStorage.removeItem(DEMO_USER_KEY);
-          }
-        }
-
-        // Standard Supabase session check
         const { session: currentSession } = await getSession();
         if (mounted) {
           setSession(currentSession);
@@ -65,9 +44,13 @@ export default function useAuth() {
             
             if (allowed) {
               const prof = await getProfile(currentSession.user.id);
+              const resolvedDisplayName = getDisplayNameForEmail(
+                email,
+                prof?.display_name || currentSession.user.user_metadata?.full_name || email.split('@')[0]
+              );
               if (mounted) {
                 setProfile(prof);
-                setDisplayName(prof?.display_name || currentSession.user.user_metadata?.full_name || email.split('@')[0]);
+                setDisplayName(resolvedDisplayName);
               }
             }
           }
@@ -95,9 +78,13 @@ export default function useAuth() {
           
           if (allowed) {
             const prof = await getProfile(currentSession.user.id);
+            const resolvedDisplayName = getDisplayNameForEmail(
+              email,
+              prof?.display_name || currentSession.user.user_metadata?.full_name || email.split('@')[0]
+            );
             if (mounted) {
               setProfile(prof);
-              setDisplayName(prof?.display_name || currentSession.user.user_metadata?.full_name || email.split('@')[0]);
+              setDisplayName(resolvedDisplayName);
             }
           } else {
             setProfile(null);
@@ -108,7 +95,6 @@ export default function useAuth() {
         setIsAllowed(false);
         setProfile(null);
         setDisplayName('');
-        localStorage.removeItem(DEMO_USER_KEY);
       }
     });
 
@@ -129,28 +115,7 @@ export default function useAuth() {
     }
   };
 
-  const signInAsDemo = (email: string, name: string) => {
-    const demoUser: DemoUser = {
-      id: `demo-${email.replace(/[^a-zA-Z0-9]/g, '')}`,
-      email,
-      display_name: name,
-    };
-    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(demoUser));
-    setUser({ id: demoUser.id, email: demoUser.email } as User);
-    setIsAllowed(true);
-    setDisplayName(demoUser.display_name);
-    setProfile({
-      id: demoUser.id,
-      email: demoUser.email,
-      display_name: demoUser.display_name,
-      avatar_url: null,
-      created_at: new Date().toISOString(),
-      last_seen: new Date().toISOString(),
-    });
-  };
-
   const signOut = async () => {
-    localStorage.removeItem(DEMO_USER_KEY);
     try {
       await authSignOut();
     } catch {
@@ -171,7 +136,6 @@ export default function useAuth() {
     isAuthenticated: !!user, 
     isAllowed, 
     signIn, 
-    signInAsDemo, 
     signOut, 
     displayName,
     authError 
