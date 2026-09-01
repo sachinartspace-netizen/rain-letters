@@ -1,223 +1,108 @@
-# 🌧 RAIN LETTERS — PRATIMA
+# Rain Letters
 
-A private, production-ready interactive website and digital world made for two people. Themed around **rain, grass, flowers, personal messages, and two people connecting**.
+Rain Letters is a private, interactive two-person web experience built around rain, flowers, shared messages, and a custom garden world.
 
-Built with **React 19, TypeScript, Three.js (React Three Fiber), Supabase (Auth, Postgres, Realtime), Framer Motion, and Vanilla CSS**.
+It uses React, TypeScript, Vite, Three.js, Supabase, Framer Motion, and CSS custom styling.
 
----
+## Overview
 
-## 🌟 Features Overview
+The app includes:
+- a procedural 3D rain environment
+- a personalized landing page and name gate
+- Google login through Supabase Auth
+- private real-time messaging
+- presence indicators and arrival notifications
+- a shared garden growth system
+- simple browser games
 
-1. **Procedural 3D Rain World**:
-   - WebGL scene with instanced particle rain (`Three.js Points`), instanced grass blades (`InstancedMesh`), procedural blooming flowers, fog/mist, occasional distant lightning, and glowing fireflies.
-   - Low/Medium/High quality settings system automatically detected based on device capabilities.
-   - Respects `prefers-reduced-motion`.
+## Tech Stack
+- React 19
+- TypeScript
+- Vite
+- Three.js / React Three Fiber
+- Supabase
+- Framer Motion
 
-2. **Landing Experience & Date-Based Greetings**:
-   - Checks local user date: On **September 22**, displays **"HAPPY BIRTHDAY PRATIMA"** with animated petals and golden glow.
-   - On all other dates: Rotates through 17 original playful compliments without repeating consecutive items (remembers state in `localStorage`).
-   - Mouse parallax effect & letter-by-letter stagger entrance.
+## Project Structure
 
-3. **Name Entry Gate & Google Authentication**:
-   - Case-insensitive name gate accepting: `pratima`, `tima`, `xyz`, `sachin`, `sapy`.
-   - Real Google OAuth integration via Supabase Auth.
-   - Server-side email allowlist enforced via Supabase Row Level Security (RLS) policies and PostgreSQL triggers.
-   - Allowed accounts:
-     - `pratimahansda14@gmail.com`
-     - `pratimahansda18@gmail.com`
-     - `praticreates@gmail.com`
-     - `sachin.artspace@gmail.com`
-     - `sachingupta706155@gmail.com`
-     - `sachingupta766741@gmail.com`
-
-4. **Real-Time Private World & Messaging**:
-   - Translucent glassmorphism floating message cards integrated into the rainy night environment.
-   - Instant real-time message delivery via Supabase Realtime subscriptions.
-   - Environment rain intensity briefly surges on sending messages.
-   - Persistent message history stored permanently (no user-facing delete/edit options).
-
-5. **Presence & Arrival Notifications**:
-   - Real-time online/offline indicators and typing indicators ("Pratima is typing...").
-   - Toast notification when the second user logs into the garden ("🌧 Pratima just arrived").
-   - Environment transitions when both users are online (rain becomes softer, flower growth activates).
-
-6. **Shared Persistent Garden Growth**:
-   - Field of flowers grows gradually based on **accumulated shared active conversation time** (when both users are online together).
-   - Growth progress (0–100%) stored in Supabase database and persists across reloads and sessions.
-
-7. **Mini Games**:
-   - **Tic Tac Toe**: Raindrops (💧) vs Flowers (🌼) with winning bloom animations.
-   - **Rain Shield**: Original Neal.fun-inspired 2D Canvas mini-game — control an umbrella to shield a flower from dynamic rain and changing wind.
-
-8. **Memories Placeholder Architecture**:
-   - Extensible grid ready for future photos, audio recordings, dates, and letters.
-
----
-
-## 📁 Folder Structure
-
-```
+```bash
 rain-letters/
 ├── index.html
 ├── package.json
 ├── tsconfig.json
-├── vite.config.ts
 ├── vercel.json
 ├── .env.example
 ├── README.md
 ├── supabase/
-│   └── migration.sql           # Database schema, allowlist, RLS policies, triggers
-└── src/
-    ├── main.tsx
-    ├── App.tsx
-    ├── App.css
-    ├── index.css                # Design system (CSS Custom Properties)
-    ├── vite-env.d.ts
-    ├── data/
-    │   └── compliments.ts       # Editable compliments, birthday config, allowlist
-    ├── lib/
-    │   ├── supabase.ts          # Supabase client
-    │   ├── auth.ts              # Google OAuth helpers
-    │   ├── database.ts          # Postgres queries
-    │   ├── presence.ts          # Realtime Presence channels
-    │   └── realtime.ts          # Realtime Postgres change subscriptions
-    ├── hooks/
-    │   ├── useAuth.ts           # Auth state & session persistence
-    │   ├── useMessages.ts       # Realtime chat messages
-    │   ├── usePresence.ts       # Online status & typing indicators
-    │   ├── useGarden.ts         # Shared garden growth timer
-    │   ├── useCompliment.ts     # Compliment rotation / Birthday trigger
-    │   ├── useSound.ts          # Audio preference
-    │   ├── useQuality.ts        # Performance quality auto-detection
-    │   └── useReducedMotion.ts  # Accessibility motion preference
-    ├── contexts/
-    │   ├── AuthContext.tsx       # Auth provider
-    │   ├── WeatherContext.tsx    # Weather state provider
-    │   └── GardenContext.tsx     # Shared garden state provider
-    ├── scenes/
-    │   ├── RainWorld.tsx         # Main 3D scene composition
-    │   ├── RainSystem.tsx        # Instanced particle rain (GLSL Shaders)
-    │   ├── GrassSystem.tsx       # Instanced grass blades
-    │   ├── FlowerSystem.tsx      # Procedural blooming flowers
-    │   ├── FogSystem.tsx         # Atmospheric fog
-    │   ├── LightningSystem.tsx   # Distant lightning flash
-    │   ├── FireflySystem.tsx     # Floating fireflies
-    │   └── MoonLight.tsx         # Scene lighting
-    ├── components/
-    │   ├── landing/              # Landing page, GreetingText, NameEntry, GoogleLoginPrompt
-    │   ├── auth/                 # AuthCallback, AccessDenied, ProtectedRoute
-    │   ├── private/              # PrivateWorld, ChatView, MessageBubble, TypingIndicator, PresenceBar, SideMenu, GardenView, MemoriesView, SettingsView
-    │   ├── games/                # GamesMenu, TicTacToe, RainShield
-    │   ├── layout/               # RainCanvas, ThemedLoader, PageTransition
-    │   └── ui/                   # SoundToggle
-    └── styles/
-        ├── landing.css
-        ├── chat.css
-        ├── games.css
-        └── transitions.css
+│   └── migration.sql
+├── public/
+├── src/
+│   ├── App.tsx
+│   ├── App.css
+│   ├── index.css
+│   ├── main.tsx
+│   ├── components/
+│   ├── contexts/
+│   ├── data/
+│   ├── hooks/
+│   ├── lib/
+│   ├── scenes/
+│   └── styles/
+└── dist/
 ```
 
----
+## Local Development
 
-## ⚡ Local Development Setup
+### Prerequisites
+- Node.js 18+
+- npm
 
-### 1. Prerequisites
-- Node.js 18+ and `npm`.
-
-### 2. Installation
+### Install
 ```bash
-git clone <repository-url>
-cd rain-letters
 npm install
 ```
 
-### 3. Environment Configuration
-Create a `.env` file in the root directory:
-```env
-VITE_SUPABASE_URL=https://<your-supabase-project-id>.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
-### 4. Run Development Server
+### Run locally
 ```bash
 npm run dev
 ```
-Open `http://localhost:5173` in your browser.
 
----
+Open `http://localhost:5173`.
 
-## 🛠 Database & Authentication Setup (Supabase)
+## Environment Setup
 
-### Step 1: Create Supabase Project
-1. Log in to [Supabase](https://supabase.com/).
-2. Create a new project.
-3. Obtain your `SUPABASE_URL` and `SUPABASE_ANON_KEY` from **Project Settings > API**.
+Create a `.env` file in the project root:
 
-### Step 2: Run Database Migration
-1. Open the **SQL Editor** in your Supabase Dashboard.
-2. Paste and run the entire contents of `supabase/migration.sql`.
-3. This creates:
-   - `allowed_emails` table with the authorized emails.
-   - `profiles`, `messages`, `garden`, and `presence` tables.
-   - `is_allowed_user()` security definer function.
-   - Server-side Row Level Security (RLS) policies enforcing allowlist checks.
-   - `handle_new_user()` trigger for automatic profile creation.
-   - Realtime publication setup for `messages`, `garden`, and `presence`.
-
-### Step 3: Configure Google OAuth
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create an **OAuth 2.0 Client ID** (Web Application).
-3. Add Authorized Redirect URI:
-   `https://<your-supabase-project-id>.supabase.co/auth/v1/callback`
-4. Copy Client ID and Client Secret.
-5. In Supabase Dashboard: Go to **Authentication > Providers > Google**.
-6. Enable Google, paste the Client ID and Client Secret, and save.
-7. Under **Authentication > URL Configuration**:
-   - Set **Site URL** to `http://localhost:5173` (or your production Vercel URL).
-   - Add Redirect URL: `http://localhost:5173/auth/callback` and `https://your-domain.vercel.app/auth/callback`.
-
----
-
-## 🎨 Customization Guide
-
-### How to Add More Compliments
-Edit `src/data/compliments.ts`:
-```typescript
-export const compliments: string[] = [
-  'PRATIMA VERY STRONG',
-  'PRATIMA CAN MAKE A 6 FOOT DERFUTYA',
-  // Add your new compliment here!
-  'PRATIMA IS THE CHAMPION',
-];
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### How to Add Authorized Email Addresses
-1. Add to `src/data/compliments.ts` (client pre-check).
-2. Insert into the Supabase database table `allowed_emails`:
-```sql
-INSERT INTO allowed_emails (email, display_name)
-VALUES ('new.email@gmail.com', 'Display Name');
+## Supabase Setup
+
+1. Create a project in Supabase.
+2. Copy the project URL and anon key from Project Settings > API.
+3. Run the SQL in `supabase/migration.sql` in the Supabase SQL editor.
+4. Configure Google OAuth in Supabase Authentication > Providers.
+5. Add your Vercel domain in the redirect URLs.
+
+## Vercel Deployment
+
+The project is configured for Vercel and includes a `vercel.json` rewrite for SPA routing.
+
+Deployment command:
+```bash
+npx vercel --prod --yes
 ```
 
-### How to Tune Birthday Greeting Text / Date
-Edit `src/data/compliments.ts`:
-```typescript
-export const birthdayConfig = {
-  month: 9, // September (1-indexed)
-  day: 22,
-  name: 'PRATIMA',
-  greeting: 'HAPPY BIRTHDAY',
-};
-```
+## Security Notes
 
-### How to Add Memories
-Edit `src/components/private/MemoriesView.tsx` to add memory cards with photos, text, or dates.
+This app uses client-side access checks plus server-side Supabase RLS and allowlist enforcement.
 
-### How to Tune Rain & Garden Growth
-- **Rain particle counts**: Adjusted in `src/scenes/RainWorld.tsx` under `settings`.
-- **Garden growth rate**: Adjusted in `src/hooks/useGarden.ts` (default: ~0.33% growth per minute of shared online presence).
+## License
 
----
+This project is intended for private use and personal deployment.
+
 
 ## 🚀 Production Deployment (Vercel)
 
