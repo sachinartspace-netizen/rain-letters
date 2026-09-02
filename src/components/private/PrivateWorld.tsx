@@ -7,6 +7,7 @@ import MemoriesView from './MemoriesView';
 import SettingsView from './SettingsView';
 import PresenceBar from './PresenceBar';
 import OnlineToast from './OnlineToast';
+import FloatingChat from './FloatingChat';
 import GamesMenu from '../games/GamesMenu';
 import TicTacToe from '../games/TicTacToe';
 import RainCanvas from '../layout/RainCanvas';
@@ -115,6 +116,9 @@ const PrivateWorld: React.FC = () => {
         />
 
         {renderView()}
+
+        {/* Floating Chat widget active in Games, Garden, Memories & Settings */}
+        {currentView !== 'chat' && <FloatingChat />}
 
         <AnimatePresence>
           {showToast && otherUserName && (
