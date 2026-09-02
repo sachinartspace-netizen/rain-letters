@@ -10,17 +10,28 @@ interface GreetingTextProps {
   compact?: boolean;
 }
 
-// Regex to extract trailing emojis from string
+// Robust regex extraction of trailing emojis
 const extractTextAndEmoji = (fullText: string) => {
-  // Regex matching unicode emoji sequences at the end of the string
-  const match = fullText.match(/^(.*?)([\p{Extended_Pictographic}\uFE0F\u200D\u2190-\u21FF\u2700-\u27BF]+)?$/u);
-  if (match) {
-    return {
-      textPart: (match[1] || fullText).trim(),
-      emojiPart: (match[2] || '').trim(),
-    };
+  if (!fullText) return { textPart: '', emojiPart: '' };
+  
+  // Match any unicode emoji pictograph sequence at the end of the text
+  const emojiRegex = /[\p{Extended_Pictographic}\uFE0F\u200D\u2190-\u21FF\u2700-\u27BF]+/gu;
+  const matches = Array.from(fullText.matchAll(emojiRegex));
+  
+  if (matches.length > 0) {
+    const lastMatch = matches[matches.length - 1];
+    const matchIndex = lastMatch.index ?? fullText.length;
+    
+    // If the emoji is located near the end of the line
+    if (matchIndex >= Math.max(0, fullText.length - 12)) {
+      return {
+        textPart: fullText.slice(0, matchIndex).trim(),
+        emojiPart: fullText.slice(matchIndex).trim(),
+      };
+    }
   }
-  return { textPart: fullText, emojiPart: '' };
+  
+  return { textPart: fullText.trim(), emojiPart: '' };
 };
 
 const GreetingText: React.FC<GreetingTextProps> = ({ 

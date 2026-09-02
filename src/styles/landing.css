@@ -42,7 +42,7 @@
 }
 
 .greeting-text {
-  font-family: var(--font-display, 'Outfit', -apple-system, sans-serif);
+  font-family: var(--font-display, 'Outfit'), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', -apple-system, sans-serif;
   font-weight: 700;
   font-size: clamp(1.4rem, 4.5vw, 3.2rem);
   color: var(--color-text-primary, #ffffff);
@@ -83,7 +83,7 @@
 }
 
 .greeting-text-part {
-  font-family: var(--font-display, 'Outfit', -apple-system, sans-serif);
+  font-family: var(--font-display, 'Outfit'), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', -apple-system, sans-serif;
 }
 
 .greeting-emoji-part {
