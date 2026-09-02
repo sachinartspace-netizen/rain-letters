@@ -74,7 +74,7 @@
 }
 
 .greeting-line {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
@@ -82,27 +82,30 @@
   row-gap: 0.25rem;
 }
 
-.greeting-word {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  white-space: nowrap;
+.greeting-text-part {
+  font-family: var(--font-display, 'Outfit', -apple-system, sans-serif);
 }
 
-.greeting-letter {
+.greeting-emoji-part {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", sans-serif !important;
+  font-style: normal;
   display: inline-block;
-  will-change: transform, opacity;
-  font-family: var(--font-display), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  opacity: 1 !important;
+  visibility: visible !important;
+  line-height: 1;
 }
 
 .greeting-birthday-emoji {
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   margin-bottom: 0.5rem;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 
 .greeting-flowers {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   margin-top: 0.75rem;
   letter-spacing: 0.5rem;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 
 .landing-hint {
