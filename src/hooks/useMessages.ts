@@ -4,11 +4,31 @@ import { subscribeToMessages } from '../lib/realtime';
 import { useAuthContext } from '../contexts/AuthContext';
 import { getDisplayNameFromEmail } from '../lib/auth';
 
+const PERMANENT_MESSAGES_KEY = 'rain-letters-permanent-history-v2';
+
 export default function useMessages() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = localStorage.getItem(PERMANENT_MESSAGES_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return [];
+  });
   const [isLoading, setIsLoading] = useState(true);
   const { user, displayName } = useAuthContext();
   const broadcasterRef = useRef<((msg: Message) => void) | null>(null);
+
+  // Helper to persist current messages array to localStorage permanently
+  const persistMessages = (msgs: Message[]) => {
+    try {
+      localStorage.setItem(PERMANENT_MESSAGES_KEY, JSON.stringify(msgs));
+    } catch {}
+  };
 
   // Merge new messages cleanly into state without duplicates
   const mergeMessages = useCallback((incoming: Message | Message[]) => {
@@ -29,20 +49,23 @@ export default function useMessages() {
       if (!changed) return prev;
 
       // Sort by created_at ascending
-      return Array.from(prevMap.values()).sort(
+      const mergedList = Array.from(prevMap.values()).sort(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
+      
+      persistMessages(mergedList);
+      return mergedList;
     });
   }, []);
 
   useEffect(() => {
     let mounted = true;
 
-    // Load initial messages from database
+    // Load messages from database and merge with cache
     const syncFromDatabase = async () => {
       try {
-        const data = await fetchMessages(500);
-        if (mounted && Array.isArray(data)) {
+        const data = await fetchMessages(1000);
+        if (mounted && Array.isArray(data) && data.length > 0) {
           mergeMessages(data);
         }
       } catch (error) {
@@ -113,9 +136,9 @@ export default function useMessages() {
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Optimistic temporary fallback if database insert encountered network blip
+      // Fallback message object if database insert encountered network blip
       const tempMsg: Message = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         sender_id: user.id,
         sender_email: senderEmail,
         sender_name: senderName,

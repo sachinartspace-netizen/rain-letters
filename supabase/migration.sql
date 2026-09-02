@@ -38,6 +38,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.allowed_emails
     WHERE LOWER(email) = LOWER(auth.jwt() ->> 'email')
+       OR LOWER(email) = LOWER(auth.jwt() -> 'user_metadata' ->> 'email')
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
