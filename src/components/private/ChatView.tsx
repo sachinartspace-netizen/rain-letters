@@ -58,6 +58,7 @@ const ChatView: React.FC = () => {
   const { otherUserName, isOtherTyping, sendTypingStatus } = usePresence(user?.id, myNickname);
   const { rainIntensity, setRainIntensity } = useWeather();
   const [inputText, setInputText] = useState('');
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,13 +66,31 @@ const ChatView: React.FC = () => {
     ? (otherUserName === 'Pratima' ? 'Tima' : otherUserName === 'Sachin' ? 'Sapy' : otherUserName)
     : partnerNick;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
   };
 
+  // Ensure scroll is pinned to the bottom on initial load, page open, and on any message change
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isOtherTyping]);
+    scrollToBottom('auto');
+    const rAF = requestAnimationFrame(() => scrollToBottom('auto'));
+    const timer1 = setTimeout(() => scrollToBottom('auto'), 50);
+    const timer2 = setTimeout(() => scrollToBottom('smooth'), 200);
+
+    return () => {
+      cancelAnimationFrame(rAF);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [messages.length, isOtherTyping, isLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -97,6 +116,7 @@ const ChatView: React.FC = () => {
     }
     
     await sendMessage(textToSend);
+    scrollToBottom('smooth');
     
     // Briefly increase rain intensity
     setRainIntensity(Math.min(rainIntensity + 0.3, 1));
@@ -118,7 +138,7 @@ const ChatView: React.FC = () => {
 
   return (
     <div className="chat-view">
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatContainerRef}>
         {messages.length === 0 ? (
           <div className="chat-empty">
             No messages yet. Say something... 🌧
@@ -150,7 +170,7 @@ const ChatView: React.FC = () => {
             <TypingIndicator name={displayTypingName} isTyping={true} />
           )}
         </AnimatePresence>
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
       </div>
 
       <div className="chat-input-area">

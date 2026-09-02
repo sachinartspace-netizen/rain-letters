@@ -21,12 +21,25 @@ const FloatingChat: React.FC = () => {
 
   const { otherUserName, isOtherTyping, sendTypingStatus } = usePresence(user?.id, myNickname);
   const [inputText, setInputText] = useState('');
+  const floatingContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const displayTypingName = (otherUserName && otherUserName !== 'Unknown' && otherUserName !== 'User' && otherUserName !== 'Anonymous')
     ? (otherUserName === 'Pratima' ? 'Tima' : otherUserName === 'Sachin' ? 'Sapy' : otherUserName)
     : partnerNick;
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
+    if (floatingContainerRef.current) {
+      floatingContainerRef.current.scrollTo({
+        top: floatingContainerRef.current.scrollHeight,
+        behavior,
+      });
+    }
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
+  };
 
   // Track incoming partner messages when chat panel is closed
   useEffect(() => {
@@ -54,9 +67,18 @@ const FloatingChat: React.FC = () => {
 
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom('auto');
+      const rAF = requestAnimationFrame(() => scrollToBottom('auto'));
+      const timer1 = setTimeout(() => scrollToBottom('auto'), 50);
+      const timer2 = setTimeout(() => scrollToBottom('smooth'), 200);
+
+      return () => {
+        cancelAnimationFrame(rAF);
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
     }
-  }, [messages, isOtherTyping, isOpen]);
+  }, [messages.length, isOtherTyping, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -80,6 +102,7 @@ const FloatingChat: React.FC = () => {
       clearTimeout(typingTimeoutRef.current);
     }
     await sendMessage(textToSend);
+    scrollToBottom('smooth');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -145,7 +168,7 @@ const FloatingChat: React.FC = () => {
             </div>
 
             {/* Messages Body */}
-            <div className="floating-chat-messages">
+            <div className="floating-chat-messages" ref={floatingContainerRef}>
               {messages.length === 0 ? (
                 <div className="floating-chat-empty">
                   No messages yet. Say something... 🌧
@@ -165,7 +188,7 @@ const FloatingChat: React.FC = () => {
                   <TypingIndicator name={displayTypingName} isTyping={true} />
                 )}
               </AnimatePresence>
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
             </div>
 
             {/* Input Footer */}
