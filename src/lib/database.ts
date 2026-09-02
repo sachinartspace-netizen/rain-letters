@@ -25,7 +25,7 @@ export interface Profile {
   created_at: string;
 }
 
-export const fetchMessages = async (limit = 200) => {
+export const fetchMessages = async (limit = 500): Promise<Message[]> => {
   const { data, error } = await supabase
     .from('messages')
     .select('*')
@@ -36,11 +36,16 @@ export const fetchMessages = async (limit = 200) => {
     console.error('Error fetching messages:', error);
     throw error;
   }
-  return data as Message[];
+  return (data || []) as Message[];
 };
 
-export const sendMessage = async (senderId: string, senderEmail: string, senderName: string, message: string) => {
-  const { error } = await supabase
+export const sendMessage = async (
+  senderId: string, 
+  senderEmail: string, 
+  senderName: string, 
+  message: string
+): Promise<Message | null> => {
+  const { data, error } = await supabase
     .from('messages')
     .insert([
       {
@@ -49,12 +54,15 @@ export const sendMessage = async (senderId: string, senderEmail: string, senderN
         sender_name: senderName,
         message: message
       }
-    ]);
+    ])
+    .select('*')
+    .single();
     
   if (error) {
     console.error('Error sending message:', error);
     throw error;
   }
+  return data as Message | null;
 };
 
 export const getGarden = async () => {

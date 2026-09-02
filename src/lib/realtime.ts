@@ -2,18 +2,48 @@ import { supabase } from './supabase';
 import { Message, Garden } from './database';
 
 export const subscribeToMessages = (onMessage: (message: Message) => void) => {
-  const channel = supabase.channel('messages-insert-channel')
+  const channel = supabase.channel('rain-messages-live')
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
-        onMessage(payload.new as Message);
+        if (payload.new) {
+          onMessage(payload.new as Message);
+        }
       }
     )
-    .subscribe();
+    .on(
+      'broadcast',
+      { event: 'new-message' },
+      ({ payload }) => {
+        if (payload) {
+          onMessage(payload as Message);
+        }
+      }
+    )
+    .subscribe((status, err) => {
+      if (status === 'CHANNEL_ERROR' || err) {
+        console.warn('Realtime message channel status:', status, err);
+      }
+    });
 
-  return () => {
-    supabase.removeChannel(channel);
+  const broadcastMessage = (msg: Message) => {
+    try {
+      channel.send({
+        type: 'broadcast',
+        event: 'new-message',
+        payload: msg,
+      }).catch(() => {});
+    } catch {}
+  };
+
+  return {
+    unsubscribe: () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    },
+    broadcastMessage,
   };
 };
 
@@ -23,12 +53,16 @@ export const subscribeToGarden = (onUpdate: (garden: Garden) => void) => {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'garden' },
       (payload) => {
-        onUpdate(payload.new as Garden);
+        if (payload.new) {
+          onUpdate(payload.new as Garden);
+        }
       }
     )
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    try {
+      supabase.removeChannel(channel);
+    } catch {}
   };
 };

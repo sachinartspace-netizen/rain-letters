@@ -1,102 +1,133 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchMessages, sendMessage as dbSendMessage, Message } from '../lib/database';
 import { subscribeToMessages } from '../lib/realtime';
 import { useAuthContext } from '../contexts/AuthContext';
-
-const LOCAL_MESSAGES_KEY = 'rain-letters-local-messages';
+import { getDisplayNameFromEmail } from '../lib/auth';
 
 export default function useMessages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user, displayName } = useAuthContext();
+  const broadcasterRef = useRef<((msg: Message) => void) | null>(null);
 
-  const getSavedLocalMessages = (): Message[] => {
-    try {
-      const saved = localStorage.getItem(LOCAL_MESSAGES_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  };
+  // Merge new messages cleanly into state without duplicates
+  const mergeMessages = useCallback((incoming: Message | Message[]) => {
+    setMessages((prev) => {
+      const items = Array.isArray(incoming) ? incoming : [incoming];
+      const prevMap = new Map(prev.map((m) => [m.id, m]));
+      let changed = false;
 
-  const saveLocalMessages = (msgs: Message[]) => {
-    try {
-      localStorage.setItem(LOCAL_MESSAGES_KEY, JSON.stringify(msgs));
-    } catch {}
-  };
+      for (const item of items) {
+        if (!item || !item.id) continue;
+        const existing = prevMap.get(item.id);
+        if (!existing) {
+          prevMap.set(item.id, item);
+          changed = true;
+        }
+      }
+
+      if (!changed) return prev;
+
+      // Sort by created_at ascending
+      return Array.from(prevMap.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-    
-    const loadMessages = async () => {
+
+    // Load initial messages from database
+    const syncFromDatabase = async () => {
       try {
-        const data = await fetchMessages();
-        if (mounted && Array.isArray(data) && data.length > 0) {
-          setMessages(data);
-          saveLocalMessages(data);
-          return;
+        const data = await fetchMessages(500);
+        if (mounted && Array.isArray(data)) {
+          mergeMessages(data);
         }
       } catch (error) {
-        console.warn('Supabase fetch messages warning, loading local fallback:', error);
+        console.warn('Sync messages warning:', error);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
-
-      // Fallback to local stored messages
-      if (mounted) {
-        setMessages(getSavedLocalMessages());
-      }
-      if (mounted) setIsLoading(false);
     };
 
-    loadMessages();
+    syncFromDatabase();
 
-    let unsubscribe = () => {};
+    // Set up Realtime Subscription (Postgres Changes + Live Broadcast)
+    let sub: { unsubscribe: () => void; broadcastMessage: (msg: Message) => void } | null = null;
     try {
-      unsubscribe = subscribeToMessages((newMessage) => {
-        if (mounted) {
-          setMessages((prev) => {
-            if (prev.some((msg) => msg.id === newMessage.id)) return prev;
-            const updated = [...prev, newMessage];
-            saveLocalMessages(updated);
-            return updated;
-          });
+      sub = subscribeToMessages((newMessage) => {
+        if (mounted && newMessage) {
+          mergeMessages(newMessage);
         }
       });
+      broadcasterRef.current = sub.broadcastMessage;
     } catch (err) {
-      console.warn('Realtime messages subscription warning:', err);
+      console.warn('Realtime subscription error:', err);
     }
+
+    // Background polling every 3 seconds so no message is ever missed
+    const pollInterval = setInterval(() => {
+      if (mounted) {
+        syncFromDatabase();
+      }
+    }, 3000);
+
+    // Sync immediately when user returns to tab / unlocks phone screen
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && mounted) {
+        syncFromDatabase();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
 
     return () => {
       mounted = false;
-      unsubscribe();
+      clearInterval(pollInterval);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+      if (sub) {
+        sub.unsubscribe();
+      }
     };
-  }, []);
+  }, [mergeMessages]);
 
   const sendMessage = useCallback(async (messageText: string) => {
     if (!user || !messageText.trim()) return;
-    
-    const newMsg: Message = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      sender_id: user.id,
-      sender_email: user.email || '',
-      sender_name: displayName || 'Anonymous',
-      message: messageText.trim(),
-      created_at: new Date().toISOString(),
-    };
 
-    // Immediately update UI
-    setMessages((prev) => {
-      const updated = [...prev, newMsg];
-      saveLocalMessages(updated);
-      return updated;
-    });
+    const senderEmail = user.email || '';
+    const senderName = getDisplayNameFromEmail(senderEmail) || displayName || 'User';
+    const textTrimmed = messageText.trim();
 
-    // Attempt database insert
+    // 1. Insert into database
     try {
-      await dbSendMessage(user.id, user.email || '', displayName || 'Anonymous', messageText.trim());
+      const inserted = await dbSendMessage(user.id, senderEmail, senderName, textTrimmed);
+      if (inserted) {
+        mergeMessages(inserted);
+        // 2. Broadcast immediately over live socket (<50ms)
+        if (broadcasterRef.current) {
+          broadcasterRef.current(inserted);
+        }
+      }
     } catch (error) {
-      console.warn('Supabase send message fallback to local state:', error);
+      console.error('Failed to send message:', error);
+      // Optimistic temporary fallback if database insert encountered network blip
+      const tempMsg: Message = {
+        id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        sender_id: user.id,
+        sender_email: senderEmail,
+        sender_name: senderName,
+        message: textTrimmed,
+        created_at: new Date().toISOString(),
+      };
+      mergeMessages(tempMsg);
+      if (broadcasterRef.current) {
+        broadcasterRef.current(tempMsg);
+      }
     }
-  }, [user, displayName]);
+  }, [user, displayName, mergeMessages]);
 
   return { messages, isLoading, sendMessage };
 }
