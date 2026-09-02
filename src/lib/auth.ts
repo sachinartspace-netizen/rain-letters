@@ -64,3 +64,30 @@ export const getDisplayNameFromEmail = (email: string): string => {
   }
   return lower.split('@')[0] || 'User';
 };
+
+export const getNicknameFromEmail = (email: string): string => {
+  if (!email) return 'User';
+  const lower = email.toLowerCase().trim();
+  if ([
+    'pratimahansda14@gmail.com',
+    'pratimahansda18@gmail.com',
+    'praticreates@gmail.com',
+  ].includes(lower)) {
+    return 'Tima';
+  }
+  if ([
+    'sachin.artspace@gmail.com',
+    'sachingupta706155@gmail.com',
+    'sachingupta766741@gmail.com',
+  ].includes(lower)) {
+    return 'Sapy';
+  }
+  return 'User';
+};
+
+export const getPartnerNickname = (myEmail: string): string => {
+  const nick = getNicknameFromEmail(myEmail);
+  if (nick === 'Tima') return 'Sapy';
+  if (nick === 'Sapy') return 'Tima';
+  return 'Partner';
+};

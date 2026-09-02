@@ -7,17 +7,24 @@ import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import { AnimatePresence } from 'framer-motion';
 import ThemedLoader from '../layout/ThemedLoader';
+import { getNicknameFromEmail, getPartnerNickname } from '../../lib/auth';
 
 const ChatView: React.FC = () => {
   const { messages, isLoading, sendMessage } = useMessages();
-  const { user, displayName } = useAuthContext();
-  const { otherUserName, isOtherTyping, sendTypingStatus } = usePresence(user?.id, displayName || 'Unknown');
+  const { user } = useAuthContext();
+  
+  const myNickname = getNicknameFromEmail(user?.email || '');
+  const partnerNick = getPartnerNickname(user?.email || '');
+
+  const { otherUserName, isOtherTyping, sendTypingStatus } = usePresence(user?.id, myNickname);
   const { rainIntensity, setRainIntensity } = useWeather();
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const partnerName = otherUserName || (displayName === 'Sachin' ? 'Pratima' : 'Sachin');
+  const displayTypingName = (otherUserName && otherUserName !== 'Unknown' && otherUserName !== 'User' && otherUserName !== 'Anonymous')
+    ? (otherUserName === 'Pratima' ? 'Tima' : otherUserName === 'Sachin' ? 'Sapy' : otherUserName)
+    : partnerNick;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,7 +96,7 @@ const ChatView: React.FC = () => {
         
         <AnimatePresence>
           {isOtherTyping && (
-            <TypingIndicator name={partnerName} isTyping={true} />
+            <TypingIndicator name={displayTypingName} isTyping={true} />
           )}
         </AnimatePresence>
         <div ref={messagesEndRef} />

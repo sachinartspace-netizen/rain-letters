@@ -16,23 +16,26 @@ import usePresence from '../../hooks/usePresence';
 import { useWeather } from '../../contexts/WeatherContext';
 import { useGardenContext } from '../../contexts/GardenContext';
 import useQuality from '../../hooks/useQuality';
+import { getNicknameFromEmail } from '../../lib/auth';
 
 import '../../styles/chat.css';
 
 type GameView = 'menu' | 'tictactoe';
 
 const PrivateWorld: React.FC = () => {
-  const { user, displayName } = useAuthContext();
+  const { user } = useAuthContext();
   const [currentView, setCurrentView] = useState<string>('chat');
   const [currentGame, setCurrentGame] = useState<GameView>('menu');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const myNickname = getNicknameFromEmail(user?.email || '');
 
   const {
     otherUserName,
     isOtherOnline,
     bothOnline,
     otherJustArrived,
-  } = usePresence(user?.id, displayName || 'Unknown');
+  } = usePresence(user?.id, myNickname);
 
   const { rainIntensity, windStrength, setRainIntensity } = useWeather();
   const { growth, totalMinutes, isGrowing } = useGardenContext();
@@ -116,7 +119,7 @@ const PrivateWorld: React.FC = () => {
         <AnimatePresence>
           {showToast && otherUserName && (
             <OnlineToast
-              name={otherUserName}
+              name={otherUserName === 'Pratima' ? 'Tima' : otherUserName === 'Sachin' ? 'Sapy' : otherUserName}
               visible={showToast}
               onDismiss={() => setShowToast(false)}
             />
