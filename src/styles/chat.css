@@ -413,6 +413,49 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
+.floating-chat-trigger--unread {
+  border-color: #34d399 !important;
+  background: rgba(16, 40, 30, 0.95) !important;
+}
+
+.floating-chat-unread-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: flex;
+  width: 14px;
+  height: 14px;
+}
+
+.floating-chat-unread-dot__ping {
+  position: absolute;
+  display: inline-flex;
+  height: 100%;
+  width: 100%;
+  border-radius: 50%;
+  background-color: #34d399;
+  opacity: 0.75;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.floating-chat-unread-dot__core {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+  height: 14px;
+  width: 14px;
+  background-color: #10b981;
+  border: 2px solid #060e1a;
+  box-shadow: 0 0 8px #34d399;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
 .floating-chat-panel {
   position: fixed;
   bottom: 1.25rem;

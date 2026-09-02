@@ -9,8 +9,12 @@ import { getNicknameFromEmail, getPartnerNickname } from '../../lib/auth';
 
 const FloatingChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const { messages, sendMessage } = useMessages();
   const { user } = useAuthContext();
+  const prevMsgCountRef = useRef(messages.length);
 
   const myNickname = getNicknameFromEmail(user?.email || '');
   const partnerNick = getPartnerNickname(user?.email || '');
@@ -23,6 +27,30 @@ const FloatingChat: React.FC = () => {
   const displayTypingName = (otherUserName && otherUserName !== 'Unknown' && otherUserName !== 'User' && otherUserName !== 'Anonymous')
     ? (otherUserName === 'Pratima' ? 'Tima' : otherUserName === 'Sachin' ? 'Sapy' : otherUserName)
     : partnerNick;
+
+  // Track incoming partner messages when chat panel is closed
+  useEffect(() => {
+    if (messages.length > prevMsgCountRef.current) {
+      const newMsg = messages[messages.length - 1];
+      const isFromPartner = newMsg && (
+        newMsg.sender_id !== user?.id && 
+        (!user?.email || newMsg.sender_email.toLowerCase() !== user.email.toLowerCase())
+      );
+
+      if (isFromPartner && !isOpen) {
+        setHasUnread(true);
+        setUnreadCount((prev) => prev + 1);
+      }
+    }
+    prevMsgCountRef.current = messages.length;
+  }, [messages, isOpen, user]);
+
+  // When user opens the floating chat panel, mark unread as read and clear dot
+  const handleOpenChat = () => {
+    setIsOpen(true);
+    setHasUnread(false);
+    setUnreadCount(0);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -63,18 +91,32 @@ const FloatingChat: React.FC = () => {
 
   return (
     <>
-      {/* Floating Chat Trigger Button */}
+      {/* Floating Chat Trigger Button with Animated Notification Dot */}
       {!isOpen && (
         <motion.button
-          className="floating-chat-trigger"
-          onClick={() => setIsOpen(true)}
+          className={`floating-chat-trigger ${hasUnread ? 'floating-chat-trigger--unread' : ''}`}
+          onClick={handleOpenChat}
           initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          animate={hasUnread ? {
+            scale: [1, 1.1, 1, 1.1, 1],
+            boxShadow: [
+              '0 0 10px rgba(52, 211, 153, 0.4)',
+              '0 0 25px rgba(52, 211, 153, 0.9)',
+              '0 0 10px rgba(52, 211, 153, 0.4)'
+            ],
+            transition: { duration: 1.5, repeat: Infinity }
+          } : { scale: 1, opacity: 1 }}
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           title="Open Chat"
         >
-          💬 Chat
+          {hasUnread && (
+            <span className="floating-chat-unread-dot" aria-label="Unread message notification">
+              <span className="floating-chat-unread-dot__ping" />
+              <span className="floating-chat-unread-dot__core" />
+            </span>
+          )}
+          💬 Chat {unreadCount > 0 && `(${unreadCount})`}
         </motion.button>
       )}
 
