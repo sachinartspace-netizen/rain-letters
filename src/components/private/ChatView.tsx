@@ -9,6 +9,45 @@ import { AnimatePresence } from 'framer-motion';
 import ThemedLoader from '../layout/ThemedLoader';
 import { getNicknameFromEmail, getPartnerNickname } from '../../lib/auth';
 
+const formatMessageDateHeader = (dateStr: string): string => {
+  try {
+    const messageDate = new Date(dateStr);
+    if (isNaN(messageDate.getTime())) return '';
+
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isSameDay = (d1: Date, d2: Date) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+
+    if (isSameDay(messageDate, today)) {
+      return 'Today';
+    }
+    if (isSameDay(messageDate, yesterday)) {
+      return 'Yesterday';
+    }
+
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const day = messageDate.getDate();
+    const month = months[messageDate.getMonth()];
+    const year = messageDate.getFullYear();
+
+    if (year === today.getFullYear()) {
+      return `${day} ${month}`;
+    }
+    return `${day} ${month} ${year}`;
+  } catch {
+    return '';
+  }
+};
+
 const ChatView: React.FC = () => {
   const { messages, isLoading, sendMessage } = useMessages();
   const { user } = useAuthContext();
@@ -85,13 +124,25 @@ const ChatView: React.FC = () => {
             No messages yet. Say something... 🌧
           </div>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOwn={Boolean(msg.sender_id === user?.id || (user?.email && msg.sender_email.toLowerCase() === user.email.toLowerCase()))}
-            />
-          ))
+          messages.map((msg, index) => {
+            const currentHeader = formatMessageDateHeader(msg.created_at);
+            const prevHeader = index > 0 ? formatMessageDateHeader(messages[index - 1].created_at) : null;
+            const showDateDivider = currentHeader && currentHeader !== prevHeader;
+
+            return (
+              <React.Fragment key={msg.id}>
+                {showDateDivider && (
+                  <div className="chat-date-divider">
+                    <span className="chat-date-badge">{currentHeader}</span>
+                  </div>
+                )}
+                <MessageBubble
+                  message={msg}
+                  isOwn={Boolean(msg.sender_id === user?.id || (user?.email && msg.sender_email.toLowerCase() === user.email.toLowerCase()))}
+                />
+              </React.Fragment>
+            );
+          })
         )}
         
         <AnimatePresence>

@@ -100,6 +100,28 @@
   gap: 8px;
 }
 
+.chat-date-divider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0 0.5rem 0;
+  width: 100%;
+}
+
+.chat-date-badge {
+  background: rgba(15, 31, 58, 0.75);
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.8));
+  font-size: 0.75rem;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  border: 1px solid rgba(160, 200, 235, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-family: var(--font-body, sans-serif);
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 .chat-empty {
   margin: auto;
   text-align: center;
