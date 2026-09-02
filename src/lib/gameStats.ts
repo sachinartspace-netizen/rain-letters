@@ -1,4 +1,4 @@
-const STATS_KEY = 'rain-letters-game-stats';
+const STATS_KEY = 'rain-letters-game-stats-v2';
 
 export interface GameStats {
   tictactoe: {
@@ -6,11 +6,6 @@ export interface GameStats {
     raindropWins: number;
     flowerWins: number;
     draws: number;
-  };
-  rainshield: {
-    gamesPlayed: number;
-    highScore: number;
-    totalSecondsSurvived: number;
   };
 }
 
@@ -21,11 +16,6 @@ const defaultStats: GameStats = {
     flowerWins: 0,
     draws: 0,
   },
-  rainshield: {
-    gamesPlayed: 0,
-    highScore: 0,
-    totalSecondsSurvived: 0,
-  },
 };
 
 export const getGameStats = (): GameStats => {
@@ -35,22 +25,23 @@ export const getGameStats = (): GameStats => {
     const parsed = JSON.parse(data);
     return {
       tictactoe: { ...defaultStats.tictactoe, ...parsed.tictactoe },
-      rainshield: { ...defaultStats.rainshield, ...parsed.rainshield },
     };
   } catch {
     return defaultStats;
   }
 };
 
-export const recordTicTacToeWin = (winner: 'X' | 'O') => {
+export const recordTicTacToeSymbolWin = (symbol: '💧' | '🌼') => {
   const stats = getGameStats();
   stats.tictactoe.gamesPlayed += 1;
-  if (winner === 'X') {
+  if (symbol === '💧') {
     stats.tictactoe.raindropWins += 1;
-  } else if (winner === 'O') {
+  } else if (symbol === '🌼') {
     stats.tictactoe.flowerWins += 1;
   }
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {}
   return stats;
 };
 
@@ -58,17 +49,8 @@ export const recordTicTacToeDraw = () => {
   const stats = getGameStats();
   stats.tictactoe.gamesPlayed += 1;
   stats.tictactoe.draws += 1;
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-  return stats;
-};
-
-export const recordRainShieldGame = (scoreSeconds: number) => {
-  const stats = getGameStats();
-  stats.rainshield.gamesPlayed += 1;
-  stats.rainshield.totalSecondsSurvived += scoreSeconds;
-  if (scoreSeconds > stats.rainshield.highScore) {
-    stats.rainshield.highScore = scoreSeconds;
-  }
-  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+  } catch {}
   return stats;
 };
