@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { WeatherProvider } from './contexts/WeatherContext';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
           <div className="app">
             <AnimatedRoutes />
           </div>
+          <Analytics />
         </WeatherProvider>
       </AuthProvider>
     </BrowserRouter>
