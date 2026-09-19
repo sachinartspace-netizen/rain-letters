@@ -3,7 +3,7 @@
  */
 
 export const compliments: string[] = [
-  "Sorry for treating you Bad I feard losing you that's why i was doing all those things, I had a feeling that you will go to someone else and this burned me",
+  "Sorry for treating you Bad I feard losing you that's why i was doing all those things, I had a feeling that you will go to someone else and this burned me, you met me a very strange point when i was carving for someone and hence i got attached to you, I yearn for your happy life.",
 ];
 
 /**
