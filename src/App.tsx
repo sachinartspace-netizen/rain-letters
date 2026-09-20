@@ -26,6 +26,12 @@ const PrivateWorldWithGarden = () => (
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+
+  React.useEffect(() => {
+    import('./lib/tracker').then(({ logDeviceVisit }) => {
+      logDeviceVisit(location.pathname);
+    });
+  }, [location.pathname]);
   
   return (
     <AnimatePresence mode="wait">
