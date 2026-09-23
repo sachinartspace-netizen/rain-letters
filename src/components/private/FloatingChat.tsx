@@ -5,7 +5,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import usePresence from '../../hooks/usePresence';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
-import { getNicknameFromEmail, getPartnerNickname } from '../../lib/auth';
+import { getNicknameFromEmail, getPartnerNickname, isSamePerson } from '../../lib/auth';
 
 const FloatingChat: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,7 +47,7 @@ const FloatingChat: React.FC = () => {
       const newMsg = messages[messages.length - 1];
       const isFromPartner = newMsg && (
         newMsg.sender_id !== user?.id && 
-        (!user?.email || newMsg.sender_email.toLowerCase() !== user.email.toLowerCase())
+        !isSamePerson(newMsg.sender_email, user?.email)
       );
 
       if (isFromPartner && !isOpen) {
@@ -178,7 +178,7 @@ const FloatingChat: React.FC = () => {
                   <MessageBubble
                     key={msg.id}
                     message={msg}
-                    isOwn={Boolean(msg.sender_id === user?.id || (user?.email && msg.sender_email.toLowerCase() === user.email.toLowerCase()))}
+                    isOwn={Boolean(msg.sender_id === user?.id || isSamePerson(msg.sender_email, user?.email))}
                   />
                 ))
               )}

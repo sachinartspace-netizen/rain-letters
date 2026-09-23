@@ -91,3 +91,24 @@ export const getPartnerNickname = (myEmail: string): string => {
   if (nick === 'Sapy') return 'Tima';
   return 'Partner';
 };
+
+export const isSamePerson = (email1?: string | null, email2?: string | null): boolean => {
+  if (!email1 || !email2) return false;
+  const e1 = email1.toLowerCase().trim();
+  const e2 = email2.toLowerCase().trim();
+  if (e1 === e2) return true;
+  const pratimaEmails = [
+    'pratimahansda14@gmail.com',
+    'pratimahansda18@gmail.com',
+    'praticreates@gmail.com',
+  ];
+  const sachinEmails = [
+    'sachin.artspace@gmail.com',
+    'sachingupta706155@gmail.com',
+    'sachingupta766741@gmail.com',
+  ];
+  if (pratimaEmails.includes(e1) && pratimaEmails.includes(e2)) return true;
+  if (sachinEmails.includes(e1) && sachinEmails.includes(e2)) return true;
+  return false;
+};
+

@@ -7,7 +7,7 @@ import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import { AnimatePresence } from 'framer-motion';
 import ThemedLoader from '../layout/ThemedLoader';
-import { getNicknameFromEmail, getPartnerNickname } from '../../lib/auth';
+import { getNicknameFromEmail, getPartnerNickname, isSamePerson } from '../../lib/auth';
 
 const formatMessageDateHeader = (dateStr: string): string => {
   try {
@@ -158,7 +158,7 @@ const ChatView: React.FC = () => {
                 )}
                 <MessageBubble
                   message={msg}
-                  isOwn={Boolean(msg.sender_id === user?.id || (user?.email && msg.sender_email.toLowerCase() === user.email.toLowerCase()))}
+                  isOwn={Boolean(msg.sender_id === user?.id || isSamePerson(msg.sender_email, user?.email))}
                 />
               </React.Fragment>
             );

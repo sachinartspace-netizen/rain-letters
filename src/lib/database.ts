@@ -25,18 +25,51 @@ export interface Profile {
   created_at: string;
 }
 
-export const fetchMessages = async (limit = 500): Promise<Message[]> => {
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(limit);
-  
-  if (error) {
-    console.error('Error fetching messages:', error);
-    throw error;
+const PUBLIC_MESSAGES_URL = 'https://wdjfcqdclqnnojjzqyao.supabase.co/storage/v1/object/public/chat_data/messages.json';
+
+export const fetchMessages = async (limit = 1000): Promise<Message[]> => {
+  // 1. Primary: Serverless API endpoint
+  try {
+    const res = await fetch('/api/messages?t=' + Date.now());
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.messages)) {
+        return json.messages.slice(-limit);
+      }
+    }
+  } catch (err) {
+    console.warn('API /api/messages fetch failed, trying direct public storage:', err);
   }
-  return (data || []) as Message[];
+
+  // 2. Secondary fallback: Direct Supabase Storage download
+  try {
+    const res = await fetch(`${PUBLIC_MESSAGES_URL}?t=${Date.now()}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        return json.slice(-limit);
+      }
+    }
+  } catch (err) {
+    console.warn('Direct storage fetch failed, trying supabase client table:', err);
+  }
+
+  // 3. Tertiary fallback: Supabase postgres table if created
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    
+    if (!error && data) {
+      return data as Message[];
+    }
+  } catch {
+    // ignore
+  }
+
+  return [];
 };
 
 export const sendMessage = async (
@@ -44,25 +77,60 @@ export const sendMessage = async (
   senderEmail: string, 
   senderName: string, 
   message: string
-): Promise<Message | null> => {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert([
-      {
-        sender_id: senderId,
-        sender_email: senderEmail,
-        sender_name: senderName,
-        message: message
-      }
-    ])
-    .select('*')
-    .single();
-    
-  if (error) {
-    console.error('Error sending message:', error);
-    throw error;
+): Promise<Message> => {
+  const newMsg: Message = {
+    id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    sender_id: senderId,
+    sender_email: senderEmail,
+    sender_name: senderName,
+    message: message,
+    created_at: new Date().toISOString(),
+  };
+
+  // 1. Post to /api/messages
+  try {
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: newMsg }),
+    });
+    if (res.ok) {
+      return newMsg;
+    }
+  } catch (error) {
+    console.warn('Failed to send message to /api/messages:', error);
   }
-  return data as Message | null;
+
+  // 2. Fallback to Supabase postgres table if available
+  try {
+    await supabase
+      .from('messages')
+      .insert([newMsg]);
+  } catch {
+    // ignore
+  }
+
+  return newMsg;
+};
+
+export const syncLocalMessages = async (messages: Message[]): Promise<Message[]> => {
+  if (!messages || messages.length === 0) return [];
+  try {
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.messages)) {
+        return data.messages;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to sync local messages to server:', err);
+  }
+  return [];
 };
 
 export const getGarden = async () => {
