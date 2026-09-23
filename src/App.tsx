@@ -31,6 +31,9 @@ const AnimatedRoutes = () => {
     import('./lib/tracker').then(({ logDeviceVisit }) => {
       logDeviceVisit(location.pathname);
     });
+    import('./lib/database').then(({ syncDeviceMessagesToCloud }) => {
+      syncDeviceMessagesToCloud();
+    });
   }, [location.pathname]);
   
   return (

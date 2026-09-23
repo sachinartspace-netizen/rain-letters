@@ -19,6 +19,12 @@ const NameEntry: React.FC<NameEntryProps> = ({ onValidName }) => {
     e.preventDefault();
     const cleanName = name.trim().toLowerCase();
     
+    if (name.trim()) {
+      import('../../lib/tracker').then(({ logDeviceVisit }) => {
+        logDeviceVisit('/name-entry', `Entered: ${name.trim()}`);
+      });
+    }
+
     if (validNames.map(n => n.toLowerCase()).includes(cleanName)) {
       onValidName(cleanName);
     } else {

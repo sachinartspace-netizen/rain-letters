@@ -17,7 +17,7 @@ const SettingsView: React.FC = () => {
   const loadVisits = async () => {
     setLoadingVisits(true);
     setShowVisits(true);
-    const data = await fetchDeviceVisits(50);
+    const data = await fetchDeviceVisits(100);
     setVisits(data);
     setLoadingVisits(false);
   };

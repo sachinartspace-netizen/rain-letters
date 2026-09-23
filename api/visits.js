@@ -8,6 +8,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -18,8 +19,8 @@ export default async function handler(req, res) {
     const { data: fileList, error: listError } = await supabaseAdmin.storage
       .from('site_visits')
       .list('', {
-        limit: 50,
-        sortBy: { column: 'created_at', order: 'desc' },
+        limit: 100,
+        sortBy: { column: 'name', order: 'desc' },
       });
 
     if (listError || !fileList) {
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
     const jsonFiles = fileList.filter((f) => f.name.endsWith('.json'));
 
     const visits = await Promise.all(
-      jsonFiles.slice(0, 30).map(async (file) => {
+      jsonFiles.map(async (file) => {
         try {
           const download = await supabaseAdmin.storage
             .from('site_visits')
@@ -46,7 +47,10 @@ export default async function handler(req, res) {
       })
     );
 
-    return res.status(200).json({ visits: visits.filter(Boolean) });
+    const validVisits = visits.filter(Boolean);
+    validVisits.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return res.status(200).json({ visits: validVisits });
   } catch (err) {
     console.error('Visits API error:', err);
     return res.status(500).json({ error: err.message });

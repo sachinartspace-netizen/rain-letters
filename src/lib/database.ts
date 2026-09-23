@@ -133,6 +133,41 @@ export const syncLocalMessages = async (messages: Message[]): Promise<Message[]>
   return [];
 };
 
+export const syncDeviceMessagesToCloud = async (): Promise<void> => {
+  const STORAGE_KEYS = [
+    'rain-letters-permanent-history-v2',
+    'rain-letters-local-messages',
+    'rain-letters-messages',
+    'rain-letters-backup-messages',
+  ];
+
+  const map = new Map<string, Message>();
+  for (const key of STORAGE_KEYS) {
+    try {
+      const item = localStorage.getItem(key);
+      if (item) {
+        const parsed = JSON.parse(item);
+        if (Array.isArray(parsed)) {
+          for (const m of parsed) {
+            if (m && m.id && m.message) {
+              map.set(m.id, m);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  const localMsgs = Array.from(map.values());
+  if (localMsgs.length > 0) {
+    try {
+      await syncLocalMessages(localMsgs);
+    } catch (err) {
+      console.warn('Silent cloud sync warning:', err);
+    }
+  }
+};
+
 export const getGarden = async () => {
   const { data, error } = await supabase
     .from('garden')
